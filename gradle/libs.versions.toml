@@ -35,6 +35,7 @@ coil = "2.7.0"
 datastorePreferences = "1.1.1"
 runtimeLivedata = "1.7.4"
 runtimeLivedataVersion = "1.0.5"
+places = "4.1.0"
 
 [libraries]
 # Default
@@ -83,6 +84,7 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 # Exercise 6 and onwards
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences"}
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
+places = { group = "com.google.android.libraries.places", name = "places", version.ref = "places" }
 
 [plugins]
 # Default
