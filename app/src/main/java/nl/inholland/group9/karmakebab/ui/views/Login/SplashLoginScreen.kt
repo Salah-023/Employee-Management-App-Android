@@ -21,15 +21,16 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
 import nl.inholland.group9.karmakebab.R
+import nl.inholland.group9.karmakebab.ui.viewmodels.Login.LoginState
+import nl.inholland.group9.karmakebab.ui.viewmodels.Login.LoginViewModel
 
-val MindsetFontFamily = FontFamily(
-    Font(R.font.mindset) // Use your custom font file here
-)
+val MindsetFontFamily = FontFamily(Font(R.font.mindset)) // Use your custom font file here
 
 @Composable
-fun SplashLoginScreen() {
+fun SplashLoginScreen(onLoginSuccess: () -> Unit) {
     var startAnimation by remember { mutableStateOf(false) }
     var showLoginUI by remember { mutableStateOf(false) }
 
@@ -62,31 +63,21 @@ fun SplashLoginScreen() {
                 modifier = Modifier.size(150.dp)
             )
 
-            // Login UI (Email, Password, Button)
             AnimatedVisibility(
                 visible = showLoginUI,
                 enter = fadeIn(animationSpec = tween(800)),
                 exit = fadeOut()
             ) {
-                LoginUI()
+                LoginUI(onLoginSuccess = onLoginSuccess)
             }
         }
     }
 }
 
 @Composable
-fun LoginUI() {
-    // Define common TextField colors for reuse
-    val textFieldColors = TextFieldDefaults.outlinedTextFieldColors(
-        focusedBorderColor = Color(0xFFDA0175), // Pink
-        unfocusedBorderColor = Color.Gray,
-        textColor = Color.White,
-        cursorColor = Color.White
-    )
+fun LoginUI(viewModel: LoginViewModel = hiltViewModel(), onLoginSuccess: () -> Unit) {
+    val loginState by viewModel.loginState.collectAsState()
 
-    // State variables for email and password
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
 
     Column(
@@ -94,46 +85,54 @@ fun LoginUI() {
             .fillMaxWidth()
             .padding(16.dp),
         verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Start // Align all items to the start
+        horizontalAlignment = Alignment.Start
     ) {
         // Welcome Message
         Text(
             text = "Hello There, Login to Continue",
             color = Color.White,
             fontSize = 18.sp,
-            style = TextStyle(fontFamily = MindsetFontFamily), // Use custom font
-            textAlign = TextAlign.Start, // Align text to start
-            modifier = Modifier.padding(bottom = 16.dp)
+            style = TextStyle(fontFamily = MindsetFontFamily)
         )
 
-        // Email Text Field
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Username TextField
         CustomOutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = "Email Address",
-            placeholder = "Enter your email",
-            colors = textFieldColors,
-            font = MindsetFontFamily // Pass custom font to TextField
+            value = viewModel.username.collectAsState().value,
+            onValueChange = { viewModel.username.value = it },
+            label = "Username",
+            placeholder = "Enter your username",
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color(0xFFDA0175),
+                unfocusedBorderColor = Color.Gray,
+                textColor = Color.White,
+                cursorColor = Color.White
+            ),
+            font = MindsetFontFamily
         )
 
-        // Password Text Field
+        // Password TextField
         CustomOutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = viewModel.password.collectAsState().value,
+            onValueChange = { viewModel.password.value = it },
             label = "Password",
             placeholder = "Enter your password",
-            colors = textFieldColors,
-            font = MindsetFontFamily, // Pass custom font to TextField
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color(0xFFDA0175),
+                unfocusedBorderColor = Color.Gray,
+                textColor = Color.White,
+                cursorColor = Color.White
+            ),
+            font = MindsetFontFamily,
             visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                     Icon(
-                        painter = painterResource(
-                            id = if (isPasswordVisible) R.drawable.ic_eye else R.drawable.ic_eye
-                        ),
+                        painter = painterResource(id = R.drawable.ic_eye),
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(24.dp) // Larger icon size
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -143,22 +142,47 @@ fun LoginUI() {
 
         // Login Button
         Button(
-            onClick = { /* Handle login */ },
+            onClick = { viewModel.login() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFDA0175)), // Pink
-            shape = RoundedCornerShape(8.dp)
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFDA0175))
         ) {
             Text(
                 "LOGIN",
                 color = Color.White,
                 fontSize = 16.sp,
-                style = TextStyle(fontFamily = MindsetFontFamily) // Use custom font
+                style = TextStyle(fontFamily = MindsetFontFamily)
             )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Handle login state
+        when (loginState) {
+            is LoginState.Loading -> {
+                CircularProgressIndicator(color = Color.White)
+            }
+            is LoginState.Error -> {
+                Text(
+                    text = (loginState as LoginState.Error).message,
+                    color = Color.Red,
+                    fontSize = 18.sp, // Bigger font size for error messages
+                    style = TextStyle(fontFamily = MindsetFontFamily),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            is LoginState.Success -> {
+                LaunchedEffect(Unit) {
+                    onLoginSuccess()
+                }
+            }
+            else -> {}
         }
     }
 }
+
 
 // Reusable OutlinedTextField Composable
 @Composable
@@ -182,7 +206,7 @@ fun CustomOutlinedTextField(
         label = { Text(label, color = Color.White, style = TextStyle(fontFamily = font)) },
         placeholder = { Text(placeholder, color = Color.Gray, style = TextStyle(fontFamily = font)) },
         colors = colors,
-        shape = RoundedCornerShape(8.dp), // Rounded corners
+        shape = RoundedCornerShape(8.dp),
         visualTransformation = visualTransformation,
         trailingIcon = trailingIcon
     )

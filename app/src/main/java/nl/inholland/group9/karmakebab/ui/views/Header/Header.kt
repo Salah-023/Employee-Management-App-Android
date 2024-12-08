@@ -20,12 +20,11 @@ import nl.inholland.group9.karmakebab.R
 import nl.inholland.group9.karmakebab.ui.viewmodels.HeaderViewModel
 
 @Composable
-fun HomeHeader(
-    userName: String = "Bird Van Burger",
-    viewModel: HeaderViewModel = hiltViewModel()
-) {
+fun HomeHeader(viewModel: HeaderViewModel = hiltViewModel()) {
     val greeting by viewModel.greeting.collectAsState()
     val formattedDate by viewModel.formattedDate.collectAsState()
+    val userInfo by viewModel.userInfo.collectAsState()
+    val initials by viewModel.initials.collectAsState()
 
     val mindsetFont = androidx.compose.ui.text.font.FontFamily(
         androidx.compose.ui.text.font.Font(R.font.mindset)
@@ -51,7 +50,7 @@ fun HomeHeader(
             )
             // User Name
             Text(
-                text = userName,
+                text = userInfo?.name ?: "Loading...",
                 color = Color.White,
                 fontSize = 24.sp,
                 style = TextStyle(fontFamily = mindsetFont)
@@ -67,7 +66,7 @@ fun HomeHeader(
             )
         }
 
-        // Profile Icon
+        // Profile Icon with Initials
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -75,7 +74,7 @@ fun HomeHeader(
                 .align(Alignment.TopEnd)
         ) {
             Text(
-                text = "BB",
+                text = initials,
                 color = Color.White,
                 fontSize = 16.sp,
                 modifier = Modifier.align(Alignment.Center),
@@ -84,4 +83,5 @@ fun HomeHeader(
         }
     }
 }
+
 

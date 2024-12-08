@@ -18,14 +18,15 @@ import nl.inholland.group9.karmakebab.R
 @Composable
 fun BottomNavigationBar(
     selectedIndex: Int,
-    onItemSelected: (Int) -> Unit
+    onItemSelected: (Int) -> Unit,
+    profileInitials: String // Dynamically passed initials
 ) {
     val items = listOf("Home", "Calendar", "My Hours", "Profile")
     val icons = listOf(
         R.drawable.ic_home,
         R.drawable.ic_calendar,
         R.drawable.ic_timer,
-        R.drawable.ic_profile
+        null // Placeholder for Profile since it's a dynamic icon
     )
 
     val mindsetFont = androidx.compose.ui.text.font.FontFamily(
@@ -47,23 +48,43 @@ fun BottomNavigationBar(
                     .padding(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Icon with oval background
-                Box(
-                    modifier = Modifier
-                        .width(56.dp)
-                        .height(36.dp)
-                        .background(
-                            if (selectedIndex == index) Color(0xFFE8468E) else Color.Transparent,
-                            shape = RoundedCornerShape(20.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = icons[index]),
-                        contentDescription = label,
-                        modifier = Modifier.size(24.dp),
-                        tint = Color(0xFF445668)
-                    )
+                // Icon or Profile Initials Box
+                if (icons[index] != null) {
+                    Box(
+                        modifier = Modifier
+                            .width(56.dp)
+                            .height(36.dp)
+                            .background(
+                                if (selectedIndex == index) Color(0xFFE8468E) else Color.Transparent,
+                                shape = RoundedCornerShape(20.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = icons[index]!!),
+                            contentDescription = label,
+                            modifier = Modifier.size(24.dp),
+                            tint = Color(0xFF445668)
+                        )
+                    }
+                } else {
+                    // Dynamic Profile Icon with Initials
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(
+                                if (selectedIndex == index) Color(0xFFE8468E) else Color(0xFF445668),
+                                shape = RoundedCornerShape(18.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = profileInitials,
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            style = TextStyle(fontFamily = mindsetFont)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
