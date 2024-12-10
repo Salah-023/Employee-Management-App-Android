@@ -2,7 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.dagger.hilt.gradle) // <-- Only keep this one
+    alias(libs.plugins.dagger.hilt.gradle)
+    id ("kotlin-parcelize")
     kotlin("kapt")
 }
 

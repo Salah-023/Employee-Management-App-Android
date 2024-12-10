@@ -7,6 +7,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import nl.inholland.group9.karmakebab.data.services.AuthService
+import nl.inholland.group9.karmakebab.data.services.ShiftService
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -47,12 +48,13 @@ object NetworkModule {
     fun provideAuthService(retrofit: Retrofit): AuthService {
         return retrofit.create(AuthService::class.java)
     }
-//
-//    @Provides
-//    @Singleton
-//    fun provideShiftService(retrofit: Retrofit): ShiftService {
-//        return retrofit.create(ShiftService::class.java)
-//    }
+
+    @Provides
+    @Singleton
+    fun provideShiftService(retrofit: Retrofit): ShiftService {
+        return retrofit.create(ShiftService::class.java)
+    }
+
 //
 //    @Provides
 //    @Singleton
