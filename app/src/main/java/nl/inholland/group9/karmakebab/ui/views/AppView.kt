@@ -1,5 +1,7 @@
 package nl.inholland.group9.karmakebab.ui.views
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -26,6 +28,7 @@ import nl.inholland.group9.karmakebab.ui.views.MyHours.MyHoursPage
 import nl.inholland.group9.karmakebab.ui.views.Profile.ProfilePage
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppView(
     appViewModel: AppViewModel = hiltViewModel(),
@@ -91,7 +94,7 @@ fun AppView(
                         ShiftDetailView(navController = navController, shift = it)
                     }
                 }
-                composable("calendar") { CalendarPage() }
+                composable("calendar") { CalendarPage(navController = navController) }
                 composable("myhours") { MyHoursPage() }
                 composable("profile") { ProfilePage() }
             }
