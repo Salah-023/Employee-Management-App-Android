@@ -32,6 +32,7 @@ fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hil
     val currentWeekDates by viewModel.currentWeekDates.collectAsState()
     val shifts by viewModel.shifts.collectAsState()
     val events by viewModel.events.collectAsState()
+    val isCurrentWeek by viewModel.isCurrentWeek.collectAsState()
 
     Column(
         modifier = Modifier
@@ -80,6 +81,25 @@ fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hil
                     contentDescription = "Next Week",
                     tint = Color(0xFFE8468E),
                     modifier = Modifier.size(32.dp)
+                )
+            }
+        }
+
+        // "Return to Current Week" Button
+        if (!isCurrentWeek) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { viewModel.returnToCurrentWeek() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp),
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFFFE3E3)),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text(
+                    text = "Return to current week",
+                    color = Color.Black,
+                    fontSize = 16.sp
                 )
             }
         }
