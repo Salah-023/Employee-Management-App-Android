@@ -33,7 +33,8 @@ import nl.inholland.group9.karmakebab.ui.views.Profile.ProfilePage
 fun AppView(
     appViewModel: AppViewModel = hiltViewModel(),
     headerViewModel: HeaderViewModel = hiltViewModel(),
-    homePageViewModel: HomePageViewModel = hiltViewModel()
+    homePageViewModel: HomePageViewModel = hiltViewModel(),
+    onLogout: () -> Unit
 ) {
     val navController = rememberNavController()
     //navController.currentDestination.route
@@ -90,14 +91,14 @@ fun AppView(
                     val shiftId = backStackEntry.arguments?.getString("shiftId")
                     val shifts by homePageViewModel.shifts.collectAsState()
 
-                    val shift = shifts.find { it.shiftId == shiftId }
+                    val shift = shifts.find { it.id == shiftId }
                     shift?.let {
                         ShiftDetailView(navController = navController, shift = it)
                     }
                 }
                 composable("calendar") { CalendarPage(navController = navController) }
                 composable("myhours") { MyHoursPage() }
-                composable("profile") { ProfilePage() }
+                composable("profile") { ProfilePage(onLogout = onLogout) }
             }
         }
     }

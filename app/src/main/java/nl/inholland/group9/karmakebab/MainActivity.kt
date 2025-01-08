@@ -16,6 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.FirebaseApp
 import dagger.hilt.android.AndroidEntryPoint
 import nl.inholland.group9.karmakebab.ui.viewmodels.AppState
 import nl.inholland.group9.karmakebab.ui.viewmodels.AppViewModel
@@ -30,6 +31,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Initialize Firebase
+        FirebaseApp.initializeApp(this)
+
         setContent {
             val appViewModel: AppViewModel = viewModel()
             val navController = rememberNavController()
@@ -41,17 +45,20 @@ class MainActivity : ComponentActivity() {
 
             when (appState) {
                 is AppState.Loading -> {
-                    // Show a loading indicator while token state is being checked
+                    // Show a loading screen
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator() // Simple loading indicator
                     }
                 }
-                is AppState.Login -> {
-                    // Navigate to the login screen
-                    NavHost(navController = navController, startDestination = "login") {
+                else -> {
+                    // Display the navigation graph after the loading state
+                    NavHost(
+                        navController = navController,
+                        startDestination = if (appState is AppState.App) "app" else "login"
+                    ) {
                         composable("login") {
                             SplashLoginScreen(
                                 onLoginSuccess = {
@@ -62,13 +69,14 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
-                    }
-                }
-                is AppState.App -> {
-                    // Navigate to the main app view
-                    NavHost(navController = navController, startDestination = "app") {
                         composable("app") {
-                            AppView() // Main app content
+                            AppView(
+                                onLogout = {
+                                    navController.navigate("login") { // Navigate back to login
+                                        popUpTo("app") { inclusive = true } // Clear app route from the stack
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -76,5 +84,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-

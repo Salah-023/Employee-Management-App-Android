@@ -21,7 +21,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import nl.inholland.group9.karmakebab.R
 import nl.inholland.group9.karmakebab.ui.viewmodels.Calender.CalendarViewModel
-import nl.inholland.group9.karmakebab.ui.views.HomePage.UpcomingEventCard
 import nl.inholland.group9.karmakebab.ui.views.HomePage.UpcomingShiftCard
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -117,10 +116,10 @@ fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hil
                 )
             } else {
                 shifts.forEach { shift ->
-                    UpcomingShiftCard(
-                        shift = shift,
-                        onClick = { navController.navigate("shiftDetail/${shift.shiftId}") }
-                    )
+//                    UpcomingShiftCard(
+//                        shift = shift,
+//                        onClick = { navController.navigate("shiftDetail/${shift.id}") }
+//                    )
                 }
             }
         } else {
@@ -133,7 +132,7 @@ fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hil
                 )
             } else {
                 events.forEach { event ->
-                    UpcomingEventCard(event = event)
+//                    UpcomingEventCard(event = event)
                 }
             }
         }

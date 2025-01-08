@@ -23,7 +23,8 @@ import nl.inholland.group9.karmakebab.R
 import nl.inholland.group9.karmakebab.ui.viewmodels.Header.HeaderViewModel
 
 @Composable
-fun ProfilePage(viewModel: HeaderViewModel = hiltViewModel()) {
+fun ProfilePage(viewModel: HeaderViewModel = hiltViewModel(),
+                onLogout: () -> Unit) {
     // Collect user data from the ViewModel
     val userInfo by viewModel.userInfo.collectAsState()
     val initials by viewModel.initials.collectAsState()
@@ -58,7 +59,7 @@ fun ProfilePage(viewModel: HeaderViewModel = hiltViewModel()) {
 
         // User Name
         Text(
-            text = userInfo?.preferred_username ?: "Unknown User",
+            text = userInfo?.fullName ?: "Unknown User",
             fontSize = 24.sp,
             color = Color.Black,
             style = TextStyle(fontFamily = androidx.compose.ui.text.font.FontFamily(
@@ -71,15 +72,15 @@ fun ProfilePage(viewModel: HeaderViewModel = hiltViewModel()) {
         // Email Card
         ProfileInfoCard(
             icon = R.drawable.ic_email,
-            text = userInfo?.email ?: "Unknown User" // Replace this with real user email when available
+            text = userInfo?.email ?: "Unknown User"
         )
 
-        Spacer(modifier = Modifier.height(16.dp)) // Spacing between cards
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Phone Number Card
         ProfileInfoCard(
             icon = R.drawable.ic_phone,
-            text = "+3168605234" // Replace this with real user phone number when available
+            text = userInfo?.phone ?: "Unknown Phone Number"
         )
 
         Spacer(modifier = Modifier.weight(1f)) // Pushes logout button to the bottom
@@ -87,7 +88,8 @@ fun ProfilePage(viewModel: HeaderViewModel = hiltViewModel()) {
         // Logout Button
         Button(
             onClick = {
-                // Handle logout logic here
+                viewModel.logout() // Call the logout function in the ViewModel
+                onLogout() // Trigger navigation to login
             },
             modifier = Modifier
                 .fillMaxWidth()

@@ -47,66 +47,66 @@ class CalendarViewModel @Inject constructor() : ViewModel() {
 
 
 
-    // Immutable dummy data
-    private val dummyShifts = listOf(
-        Shift(
-            shiftId = "1",
-            startTime = "2024-12-11T07:00",
-            endTime = "2024-12-11T15:00",
-            employeeId = "101",
-            shiftType = "Trucker",
-            status = "Scheduled",
-            clockInTime = null,
-            clockOutTime = null,
-            shiftHours = 8
-        ),
-        Shift(
-            shiftId = "2",
-            startTime = "2024-12-12T08:00",
-            endTime = "2024-12-12T16:00",
-            employeeId = "102",
-            shiftType = "Building Crew",
-            status = "Scheduled",
-            clockInTime = null,
-            clockOutTime = null,
-            shiftHours = 8
-        ),
-        Shift(
-            shiftId = "3",
-            startTime = "2024-12-13T09:00",
-            endTime = "2024-12-13T17:00",
-            employeeId = "103",
-            shiftType = "Organizer",
-            status = "Scheduled",
-            clockInTime = null,
-            clockOutTime = null,
-            shiftHours = 8
-        )
-    )
-
-    private val dummyEvents = listOf(
-        Event(
-            title = "Vegan Summer Festival",
-            location = "Prinses 202, Utrecht",
-            date = "2024-12-11",
-            startTime = "10:00",
-            endTime = "18:00"
-        ),
-        Event(
-            title = "Karma Kebab Special Event",
-            location = "Dam Square, Amsterdam",
-            date = "2024-12-12",
-            startTime = "12:00",
-            endTime = "20:00"
-        ),
-        Event(
-            title = "Amsterdam ADE",
-            location = "Overveen 13, Haarlem",
-            date = "2024-12-13",
-            startTime = "08:00",
-            endTime = "14:00"
-        )
-    )
+//    // Immutable dummy data
+//    private val dummyShifts = listOf(
+//        Shift(
+//            shiftId = "1",
+//            startTime = "2024-12-11T07:00",
+//            endTime = "2024-12-11T15:00",
+//            employeeId = "101",
+//            shiftType = "Trucker",
+//            status = "Scheduled",
+//            clockInTime = null,
+//            clockOutTime = null,
+//            shiftHours = 8
+//        ),
+//        Shift(
+//            shiftId = "2",
+//            startTime = "2024-12-12T08:00",
+//            endTime = "2024-12-12T16:00",
+//            employeeId = "102",
+//            shiftType = "Building Crew",
+//            status = "Scheduled",
+//            clockInTime = null,
+//            clockOutTime = null,
+//            shiftHours = 8
+//        ),
+//        Shift(
+//            shiftId = "3",
+//            startTime = "2024-12-13T09:00",
+//            endTime = "2024-12-13T17:00",
+//            employeeId = "103",
+//            shiftType = "Organizer",
+//            status = "Scheduled",
+//            clockInTime = null,
+//            clockOutTime = null,
+//            shiftHours = 8
+//        )
+//    )
+//
+//    private val dummyEvents = listOf(
+//        Event(
+//            title = "Vegan Summer Festival",
+//            location = "Prinses 202, Utrecht",
+//            date = "2024-12-11",
+//            startTime = "10:00",
+//            endTime = "18:00"
+//        ),
+//        Event(
+//            title = "Karma Kebab Special Event",
+//            location = "Dam Square, Amsterdam",
+//            date = "2024-12-12",
+//            startTime = "12:00",
+//            endTime = "20:00"
+//        ),
+//        Event(
+//            title = "Amsterdam ADE",
+//            location = "Overveen 13, Haarlem",
+//            date = "2024-12-13",
+//            startTime = "08:00",
+//            endTime = "14:00"
+//        )
+//    )
 
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -162,8 +162,10 @@ class CalendarViewModel @Inject constructor() : ViewModel() {
         val startOfWeek = _currentWeek.value
         val endOfWeek = startOfWeek.plusDays(6)
 
-        _shifts.value = filterByDateRange(dummyShifts) { LocalDate.parse(it.startTime.substring(0, 10)) in startOfWeek..endOfWeek }
-        _events.value = filterByDateRange(dummyEvents) { LocalDate.parse(it.date) in startOfWeek..endOfWeek }
+//        _shifts.value = filterByDateRange(dummyShifts) { LocalDate.parse(it.startTime.substring(0, 10)) in startOfWeek..endOfWeek }
+//        _events.value = filterByDateRange(dummyEvents) { LocalDate.parse(it.date) in startOfWeek..endOfWeek }
+        _shifts.value = emptyList()
+        _events.value = emptyList()
     }
 
     private fun <T> filterByDateRange(list: List<T>, predicate: (T) -> Boolean): List<T> {

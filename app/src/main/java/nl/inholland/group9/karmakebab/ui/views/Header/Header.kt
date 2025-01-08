@@ -51,7 +51,7 @@ fun Header(viewModel: HeaderViewModel = hiltViewModel()) {
             )
             // User Name
             Text(
-                text = userInfo?.name ?: "Loading...",
+                text = userInfo?.fullName ?: "Loading...",
                 color = Color.White,
                 fontSize = 24.sp,
                 style = TextStyle(fontFamily = mindsetFont)

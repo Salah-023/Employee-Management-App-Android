@@ -1,9 +1,15 @@
 package nl.inholland.group9.karmakebab.data.models.Event
 
+import com.google.firebase.Timestamp
+
 data class Event(
-    val title: String,
-    val location: String,
-    val date: String,
-    val startTime: String,
-    val endTime: String
+    val id: String = "",
+    val name: String = "",
+    val startTime: Timestamp? = null,
+    val endTime: Timestamp? = null,
+    val address: String,
+    val venue: String,
+    val description: String,
+    val status: String,
+    val note: String?= null
 )

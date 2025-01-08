@@ -6,9 +6,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import nl.inholland.group9.karmakebab.data.repositories.AuthRepository
-import nl.inholland.group9.karmakebab.data.utils.TokenManager
 import javax.inject.Inject
+import nl.inholland.group9.karmakebab.data.repositories.AuthRepository
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
@@ -37,7 +36,6 @@ class LoginViewModel @Inject constructor(
         }
     }
 }
-
 sealed class LoginState {
     object Idle : LoginState()
     object Loading : LoginState()

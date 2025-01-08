@@ -16,8 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HeaderViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val tokenManager: TokenManager
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _greeting = MutableStateFlow("")
@@ -56,18 +55,18 @@ class HeaderViewModel @Inject constructor(
     }
 
     private suspend fun fetchUserInfo() {
-        val result = authRepository.getUserInfo()
-        result.onSuccess { userInfo ->
+        val userInfo = authRepository.getUserData()
+        if (userInfo != null) {
             _userInfo.value = userInfo
-            updateInitials(userInfo)
-        }.onFailure {
+            updateInitials(userInfo) // Pass the immutable `userInfo` directly
+        } else {
             setDefaultUserInfo()
         }
     }
 
     private fun updateInitials(userInfo: UserInfoResponse) {
-        val firstInitial = userInfo.given_name.firstOrNull()?.uppercaseChar() ?: "N"
-        val lastInitial = userInfo.family_name.firstOrNull()?.uppercaseChar() ?: "N"
+        val firstInitial = userInfo.fullName.firstOrNull()?.uppercaseChar() ?: "N"
+        val lastInitial = userInfo.fullName.split(" ").lastOrNull()?.firstOrNull()?.uppercaseChar() ?: "N"
         _initials.value = "$firstInitial$lastInitial"
     }
 
@@ -75,4 +74,11 @@ class HeaderViewModel @Inject constructor(
         _userInfo.value = null
         _initials.value = "NN"
     }
+
+    fun logout() {
+        viewModelScope.launch {
+            authRepository.logout() // Call the repository's logout function
+        }
+    }
 }
+

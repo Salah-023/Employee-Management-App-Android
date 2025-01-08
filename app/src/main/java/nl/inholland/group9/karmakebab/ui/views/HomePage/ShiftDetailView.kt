@@ -90,7 +90,7 @@ fun ShiftDetailView(navController: NavController, shift: Shift) {
                 )
                 DetailItem(
                     header = "Role",
-                    value = shift.shiftType.ifEmpty { "Unknown" },
+                    value =   "Unknown" ,
                     headerFont = colbyMedFont,
                     valueFont = colbyRegFont
                 )

@@ -7,9 +7,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import nl.inholland.group9.karmakebab.data.repositories.AuthRepository
-import java.time.Instant
 import javax.inject.Inject
+import nl.inholland.group9.karmakebab.data.repositories.AuthRepository
+
 
 @HiltViewModel
 class AppViewModel @Inject constructor(
@@ -29,29 +29,10 @@ class AppViewModel @Inject constructor(
 
     fun checkTokenState() {
         viewModelScope.launch {
-            try {
-
-                val currentTime = Instant.now()
-                val accessTokenExpiration = authRepository.getAccessTokenExpiration()
-                val refreshTokenExpiration = authRepository.getRefreshTokenExpiration()
-
-                when {
-                    refreshTokenExpiration != null && currentTime.isAfter(refreshTokenExpiration) -> {
-                        // Both access and refresh tokens are expired
-                        _appState.value = AppState.Login
-                    }
-                    accessTokenExpiration != null && currentTime.isAfter(accessTokenExpiration) -> {
-                        // Access token is expired, refresh it
-                        authRepository.refreshToken()
-                        _appState.value = AppState.App
-                    }
-                    else -> {
-                        // Access token is still valid
-                        _appState.value = AppState.App
-                    }
-                }
-            } catch (e: Exception) {
-                _appState.value = AppState.Login // Handle errors by navigating to login
+            _appState.value = if (authRepository.isUserLoggedIn()) {
+                AppState.App
+            } else {
+                AppState.Login
             }
         }
     }
