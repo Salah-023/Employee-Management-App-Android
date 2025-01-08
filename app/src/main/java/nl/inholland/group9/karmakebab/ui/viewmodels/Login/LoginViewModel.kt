@@ -12,8 +12,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val tokenManager: TokenManager
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
@@ -28,10 +27,7 @@ class LoginViewModel @Inject constructor(
             try {
                 val result = authRepository.login(username.value, password.value)
                 if (result.isSuccess) {
-                    val token = result.getOrNull()?.access_token ?: ""
-                    val refreshToken = result.getOrNull()?.refresh_token ?: ""
-                    tokenManager.saveTokens(token, refreshToken) // Save the token
-                    _loginState.value = LoginState.Success(token)
+                    _loginState.value = LoginState.Success("Login successful")
                 } else {
                     _loginState.value = LoginState.Error(result.exceptionOrNull()?.message ?: "Unknown error")
                 }
@@ -45,6 +41,6 @@ class LoginViewModel @Inject constructor(
 sealed class LoginState {
     object Idle : LoginState()
     object Loading : LoginState()
-    data class Success(val token: String) : LoginState()
+    data class Success(val message: String) : LoginState()
     data class Error(val message: String) : LoginState()
 }

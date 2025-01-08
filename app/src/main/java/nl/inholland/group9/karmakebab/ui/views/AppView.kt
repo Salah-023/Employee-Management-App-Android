@@ -36,6 +36,7 @@ fun AppView(
     homePageViewModel: HomePageViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
+    //navController.currentDestination.route
     val currentRoute by appViewModel.currentRoute.collectAsState()
     val selectedIndex by appViewModel.selectedIndex.collectAsState()
     val profileInitials by headerViewModel.initials.collectAsState()
