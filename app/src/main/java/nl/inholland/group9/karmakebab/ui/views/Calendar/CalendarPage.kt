@@ -1,7 +1,6 @@
 package nl.inholland.group9.karmakebab.ui.views.Calendar
 
-import android.os.Build
-import androidx.annotation.RequiresApi
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,17 +20,21 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import nl.inholland.group9.karmakebab.R
 import nl.inholland.group9.karmakebab.ui.viewmodels.Calender.CalendarViewModel
+import nl.inholland.group9.karmakebab.ui.viewmodels.HomePage.HomePageViewModel
+import nl.inholland.group9.karmakebab.ui.views.HomePage.UpcomingEventCard
 import nl.inholland.group9.karmakebab.ui.views.HomePage.UpcomingShiftCard
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
-fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hiltViewModel()) {
-    val selectedTab by viewModel.selectedTab.collectAsState()
-    val currentWeekNumber by viewModel.currentWeekNumber.collectAsState()
-    val currentWeekDates by viewModel.currentWeekDates.collectAsState()
-    val shifts by viewModel.shifts.collectAsState()
-    val events by viewModel.events.collectAsState()
-    val isCurrentWeek by viewModel.isCurrentWeek.collectAsState()
+fun CalendarPage(navController: NavController, calendarViewModel: CalendarViewModel = hiltViewModel(), homePageViewModel: HomePageViewModel = hiltViewModel()) {
+    val selectedTab by calendarViewModel.selectedTab.collectAsState()
+    val currentWeekNumber by calendarViewModel.currentWeekNumber.collectAsState()
+    val currentWeekDates by calendarViewModel.currentWeekDates.collectAsState()
+    val shifts by calendarViewModel.shifts.collectAsState()
+    val events by calendarViewModel.events.collectAsState()
+    val isCurrentWeek by calendarViewModel.isCurrentWeek.collectAsState()
+    val isLoadingShifts by calendarViewModel.isLoadingShifts.collectAsState()
+    val isLoadingEvents by calendarViewModel.isLoadingEvents.collectAsState()
 
     Column(
         modifier = Modifier
@@ -42,7 +45,7 @@ fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hil
         // Updated Tab Selector
         CustomTabSelector(
             selectedTab = selectedTab,
-            onTabSelected = { viewModel.selectTab(it) }
+            onTabSelected = { calendarViewModel.selectTab(it) }
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -52,7 +55,7 @@ fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hil
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { viewModel.previousWeek() }) {
+            IconButton(onClick = { calendarViewModel.previousWeek() }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_back_calendar),
                     contentDescription = "Previous Week",
@@ -74,7 +77,7 @@ fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hil
                     style = TextStyle(fontFamily = FontFamily(Font(R.font.colby_streg)))
                 )
             }
-            IconButton(onClick = { viewModel.nextWeek() }) {
+            IconButton(onClick = { calendarViewModel.nextWeek() }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_next_calendar),
                     contentDescription = "Next Week",
@@ -88,7 +91,7 @@ fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hil
         if (!isCurrentWeek) {
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { viewModel.returnToCurrentWeek() },
+                onClick = { calendarViewModel.returnToCurrentWeek() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp),
@@ -107,7 +110,14 @@ fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hil
 
         // Display Shifts or Events
         if (selectedTab == 0) {
-            if (shifts.isEmpty()) {
+            if (isLoadingShifts) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFFE8468E))
+                }
+            } else if (shifts.isEmpty()) {
                 Text(
                     text = "No shifts this week",
                     fontSize = 18.sp,
@@ -115,15 +125,26 @@ fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hil
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             } else {
-                shifts.forEach { shift ->
-//                    UpcomingShiftCard(
-//                        shift = shift,
-//                        onClick = { navController.navigate("shiftDetail/${shift.id}") }
-//                    )
+                shifts.forEach { (shift, userRole) ->
+                    UpcomingShiftCard(
+                        shift = shift,
+                        userRole = userRole,
+                        onClick = { navController.navigate("shiftDetail/${shift.id}") },
+                        viewModel = homePageViewModel,
+                        navController = navController,
+                        showClockInButton = false
+                    )
                 }
             }
         } else {
-            if (events.isEmpty()) {
+            if (isLoadingEvents) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFFE8468E))
+                }
+            } else if (events.isEmpty()) {
                 Text(
                     text = "No events this week",
                     fontSize = 18.sp,
@@ -132,7 +153,10 @@ fun CalendarPage(navController: NavController,viewModel: CalendarViewModel = hil
                 )
             } else {
                 events.forEach { event ->
-//                    UpcomingEventCard(event = event)
+                    UpcomingEventCard(
+                        event = event,
+                        viewModel = homePageViewModel
+                    )
                 }
             }
         }

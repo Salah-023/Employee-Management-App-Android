@@ -38,6 +38,7 @@ runtimeLivedata = "1.7.4"
 runtimeLivedataVersion = "1.0.5"
 firebaseAuthKtx = "23.1.0"
 firebaseFirestoreKtx = "25.1.1"
+androidxRuntimeLivedata = "1.7.6"
 
 [libraries]
 # Default
@@ -90,6 +91,7 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
+runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "androidxRuntimeLivedata" }
 
 [plugins]
 # Default

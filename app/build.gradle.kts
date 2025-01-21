@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "nl.inholland.group9.karmakebab"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.dagger.hilt.core)
     implementation(libs.dagger.hilt.android)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.runtime.livedata)
     kapt(libs.dagger.hilt.compiler)
 
     // Serialization

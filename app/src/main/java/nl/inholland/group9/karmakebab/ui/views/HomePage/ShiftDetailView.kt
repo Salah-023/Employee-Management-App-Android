@@ -2,6 +2,7 @@ package nl.inholland.group9.karmakebab.ui.views.HomePage
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -12,22 +13,39 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import nl.inholland.group9.karmakebab.R
+import nl.inholland.group9.karmakebab.data.models.shift.AssignedUser
 import nl.inholland.group9.karmakebab.data.models.shift.Shift
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
-fun ShiftDetailView(navController: NavController, shift: Shift) {
+fun ShiftDetailView(navController: NavController, shift: Shift, userRole: String) {
     val colbyRegFont = FontFamily(Font(R.font.colby_streg))
     val colbyMedFont = FontFamily(Font(R.font.colby_stmed))
     val mindset = FontFamily(Font(R.font.mindset))
 
+    // Format the date and time
+    val formattedDate = shift.startTime?.let { timestamp ->
+        SimpleDateFormat("EEEE, MMMM dd", Locale.getDefault()).format(timestamp.toDate())
+    } ?: "Unknown Date"
+
+    val formattedTime = shift.startTime?.let { start ->
+        val startFormatted = SimpleDateFormat("HH:mm", Locale.getDefault()).format(start.toDate())
+        val endFormatted = shift.endTime?.let { end ->
+            SimpleDateFormat("HH:mm", Locale.getDefault()).format(end.toDate())
+        }
+        "$startFormatted - $endFormatted"
+    } ?: "Unknown Time"
+
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F7F7)) // Updated background color
+            .background(Color(0xFFF7F7F7))
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Column(
@@ -38,21 +56,21 @@ fun ShiftDetailView(navController: NavController, shift: Shift) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
                     onClick = { navController.popBackStack() },
-                    modifier = Modifier.size(56.dp) // Bigger button size
+                    modifier = Modifier.size(56.dp)
                 ) {
                     androidx.compose.material.Icon(
                         painter = painterResource(id = R.drawable.ic_back),
                         contentDescription = "Back",
-                        tint = Color(0xFFE8468E), // Updated color
-                        modifier = Modifier.size(30.dp) // Icon size
+                        tint = Color(0xFFE8468E),
+                        modifier = Modifier.size(30.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Home",
                     fontFamily = colbyRegFont,
-                    fontSize = 20.sp, // Larger font for emphasis
-                    color = Color(0xFFE8468E) // Updated color
+                    fontSize = 20.sp,
+                    color = Color(0xFFE8468E)
                 )
             }
 
@@ -60,16 +78,16 @@ fun ShiftDetailView(navController: NavController, shift: Shift) {
 
             // Title and Date
             Text(
-                text = "OZ FESTIVAL",
+                text = shift.event?.venue ?: "Unknown Event",
                 fontFamily = mindset,
-                fontSize = 26.sp, // Larger bold title
+                fontSize = 26.sp,
                 color = Color.Black,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
             Text(
-                text = "Tuesday, October 30",
+                text = formattedDate, // Dynamically formatted date
                 fontFamily = colbyRegFont,
-                fontSize = 18.sp, // Smaller date text
+                fontSize = 18.sp,
                 color = Color.Gray,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -78,19 +96,19 @@ fun ShiftDetailView(navController: NavController, shift: Shift) {
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 DetailItem(
                     header = "Location",
-                    value = "Prinses 202, Utrecht 2067LM",
+                    value = shift.event?.address ?: "Unknown Location",
                     headerFont = colbyMedFont,
                     valueFont = colbyRegFont
                 )
                 DetailItem(
                     header = "Scheduled For",
-                    value = "07:00 - 15:00",
+                    value = formattedTime, // Dynamically formatted time range
                     headerFont = colbyMedFont,
                     valueFont = colbyRegFont
                 )
                 DetailItem(
                     header = "Role",
-                    value =   "Unknown" ,
+                    value = userRole, // Dynamic role
                     headerFont = colbyMedFont,
                     valueFont = colbyRegFont
                 )
@@ -102,16 +120,17 @@ fun ShiftDetailView(navController: NavController, shift: Shift) {
                 )
                 DetailItem(
                     header = "Number of Employees",
-                    value = "Unknown",
+                    value = shift.assignedUsers.size.toString(),
                     headerFont = colbyMedFont,
                     valueFont = colbyRegFont
                 )
                 AdditionalInformationItem(
-                    text = "Attention, bring extra something because someone, will need something somewhere",
+                    text = shift.event?.note ?: "No additional information available.",
                     headerFont = colbyMedFont,
                     valueFont = colbyRegFont
                 )
             }
+
         }
     }
 }
@@ -169,3 +188,4 @@ fun AdditionalInformationItem(text: String, headerFont: FontFamily, valueFont: F
         }
     }
 }
+

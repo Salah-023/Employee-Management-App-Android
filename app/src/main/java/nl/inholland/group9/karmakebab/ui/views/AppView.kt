@@ -1,6 +1,7 @@
 package nl.inholland.group9.karmakebab.ui.views
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import nl.inholland.group9.karmakebab.ui.views.Header.Header
 import nl.inholland.group9.karmakebab.ui.views.Calendar.CalendarPage
 import nl.inholland.group9.karmakebab.ui.views.HomePage.HomePageView
 import nl.inholland.group9.karmakebab.ui.views.HomePage.ShiftDetailView
+import nl.inholland.group9.karmakebab.ui.views.HomePage.TaskPageView
 import nl.inholland.group9.karmakebab.ui.views.MyHours.MyHoursPage
 import nl.inholland.group9.karmakebab.ui.views.Profile.ProfilePage
 
@@ -37,19 +39,16 @@ fun AppView(
     onLogout: () -> Unit
 ) {
     val navController = rememberNavController()
-    //navController.currentDestination.route
     val currentRoute by appViewModel.currentRoute.collectAsState()
     val selectedIndex by appViewModel.selectedIndex.collectAsState()
     val profileInitials by headerViewModel.initials.collectAsState()
 
-    // Update `currentRoute` whenever the route changes
     navController.addOnDestinationChangedListener { _, destination, _ ->
         appViewModel.updateCurrentRoute(destination.route ?: "home")
     }
 
     Scaffold(
         bottomBar = {
-            // Hide bottom navigation bar for specific routes
             if (currentRoute !in listOf("login", "splash") && !currentRoute.startsWith("shiftDetail")) {
                 BottomNavigationBar(
                     selectedIndex = selectedIndex,
@@ -67,7 +66,6 @@ fun AppView(
         }
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
-            // Hide header for specific routes
             if (currentRoute !in listOf("profile", "login", "splash") && !currentRoute.startsWith("shiftDetail")) {
                 Header()
             }
@@ -89,13 +87,31 @@ fun AppView(
                     arguments = listOf(navArgument("shiftId") { type = NavType.StringType })
                 ) { backStackEntry ->
                     val shiftId = backStackEntry.arguments?.getString("shiftId")
-                    val shifts by homePageViewModel.shifts.collectAsState()
+                    val shiftsWithRoles by homePageViewModel.shiftsWithRoles.collectAsState()
 
-                    val shift = shifts.find { it.id == shiftId }
-                    shift?.let {
-                        ShiftDetailView(navController = navController, shift = it)
-                    }
+
+                    val shiftWithRole = shiftsWithRoles.find { it.first.id == shiftId }
+                    shiftWithRole?.let { (shift, userRole) ->
+                        ShiftDetailView(navController = navController, shift = shift, userRole= userRole,)
+                    } ?: navController.popBackStack() // Navigate back if not found
                 }
+                composable(
+                    "tasks/{shiftId}/{role}",
+                    arguments = listOf(
+                        navArgument("shiftId") { type = NavType.StringType },
+                        navArgument("role") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val shiftId = backStackEntry.arguments?.getString("shiftId") ?: ""
+                    val role = backStackEntry.arguments?.getString("role") ?: ""
+                    val shiftsWithRoles by homePageViewModel.shiftsWithRoles.collectAsState()
+
+                    val shiftWithRole = shiftsWithRoles.find { it.first.id == shiftId }
+                    shiftWithRole?.let { (shift, userRole) ->
+                        TaskPageView(navController = navController, shift = shift, role = userRole)
+                    } ?: navController.popBackStack() // Navigate back if not found
+                }
+
                 composable("calendar") { CalendarPage(navController = navController) }
                 composable("myhours") { MyHoursPage() }
                 composable("profile") { ProfilePage(onLogout = onLogout) }
@@ -103,3 +119,4 @@ fun AppView(
         }
     }
 }
+

@@ -2,24 +2,29 @@ package nl.inholland.group9.karmakebab.data.models.shift
 
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.PropertyName
 import nl.inholland.group9.karmakebab.data.models.Event.Event
 
+
 data class Shift(
-    val id: String = "",
+    @DocumentId var id: String? = null,
     val eventId: String = "",
-    val startTime: Timestamp? = null,
-    val endTime: Timestamp? = null,
+    @PropertyName("startTime") var startTime: Timestamp? = null,
+    @PropertyName("endTime") var endTime: Timestamp? = null,
     val assignedUserIds: List<String> = emptyList(),
     var assignedUsers: List<AssignedUser> = emptyList(),
     var event: Event? = null
 )
 
+
 data class AssignedUser(
-    val userId: String = "",
-    val role: String = "",
-    var fullName: String? = null,
-    var clockInTime: Timestamp? = null,
-    var clockOutTime: Timestamp? = null
+    @PropertyName("userId") val userId: String = "",
+    @PropertyName("role") val role: String = "",
+    @PropertyName("fullName") var fullName: String? = null,
+    @PropertyName("clockInTime") var clockInTime: Timestamp? = null,
+    @PropertyName("clockOutTime") var clockOutTime: Timestamp? = null,
+    @PropertyName("completedTasks") var completedTasks: List<Int> = emptyList()
 ) {
     val initials: String
         get() {
@@ -29,4 +34,17 @@ data class AssignedUser(
                 .take(2)
                 .joinToString("")
         }
+
+
+    companion object {
+        fun fromFirestore(data: Map<String, Any?>): AssignedUser {
+            return AssignedUser(
+                userId = data["userId"] as? String ?: "",
+                role = data["role"] as? String ?: "",
+                fullName = data["fullName"] as? String,
+                clockInTime = data["clockInTime"] as? Timestamp,
+                clockOutTime = data["clockOutTime"] as? Timestamp
+            )
+        }
+    }
 }
