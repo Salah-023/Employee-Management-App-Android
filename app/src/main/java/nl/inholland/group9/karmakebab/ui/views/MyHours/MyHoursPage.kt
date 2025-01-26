@@ -115,10 +115,6 @@ fun MyHoursPage(viewModel: AvailabilityViewModel = hiltViewModel()) {
             items(daysInGrid.size) { index ->
                 val date = daysInGrid[index]
                 val normalizedDate = date?.let { viewModel.normalizeDate(it) }
-                Log.d(
-                    "MyHoursPage",
-                    "Day: $normalizedDate, Status: ${availabilityData[normalizedDate]?.status}"
-                )
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -159,7 +155,6 @@ fun MyHoursPage(viewModel: AvailabilityViewModel = hiltViewModel()) {
                             )
                         }
                     }
-
 
                     // Availability Dot Below Day Number
                     Spacer(modifier = Modifier.height(4.dp))
@@ -238,8 +233,6 @@ fun MyHoursPage(viewModel: AvailabilityViewModel = hiltViewModel()) {
                 startTime = startTime,
                 endTime = endTime
             ) { option, start, end ->
-                Log.d("MyHoursPage", "Modal Save triggered with option: $option, startTime: $start, endTime: $end")
-
                 if (option == "Available Entire Day") {
                     viewModel.deleteAvailability()
                 } else if (option == "Unavailable Until") {
@@ -372,7 +365,6 @@ fun AvailabilityModal(
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
-
 
                 Spacer(modifier = Modifier.height(16.dp))
 

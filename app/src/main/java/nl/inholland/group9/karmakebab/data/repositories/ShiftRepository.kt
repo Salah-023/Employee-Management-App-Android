@@ -11,11 +11,12 @@ import javax.inject.Inject
 
 
 class ShiftsRepository @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val eventRepository: EventRepository
 ) {
-
     suspend fun getShiftsForUser(userId: String, startDate: Timestamp? = null, endDate: Timestamp? = null): List<Shift> {
         return try {
+            // Build Firestore query
             var query = firestore.collection("shifts")
                 .whereArrayContains("assignedUserIds", userId)
                 .orderBy("startTime", Query.Direction.ASCENDING)
@@ -28,36 +29,21 @@ class ShiftsRepository @Inject constructor(
             }
 
             val result = query.get().await()
-
-            // Map query results to Shift objects
+            // Map query results to `Shift` objects and populate additional details
             val shifts = result.documents.mapNotNull { document ->
-                val shift = document.toObject(Shift::class.java)?.copy(
-                    assignedUsers = (document["assignedUsers"] as? List<Map<String, Any>>)?.mapNotNull { data ->
-                    try {
-                        AssignedUser(
-                            userId = data["userId"] as? String ?: "",
-                            role = data["role"] as? String ?: "",
-                            fullName = data["fullName"] as? String,
-                            clockInTime = data["clockInTime"] as? Timestamp,
-                            clockOutTime = data["clockOutTime"] as? Timestamp,
-                            completedTasks = data["completedTasks"] as? List<Int> ?: emptyList()
-                        )
-                    } catch (e: Exception) {
-                        Log.e("AssignedUserParsing", "Error parsing assignedUser: $data", e)
-                        null // Exclude invalid entries
-                    }
-                } ?: emptyList()
+                val shift = document.toObject(Shift::class.java)?.copy(id = document.id) ?: return@mapNotNull null
+                // Fetch teammates and event details for the shift
+                shift.copy(
+                    assignedUsers = fetchTeammatesForShift(shift),
+                    event = eventRepository.getEventById(shift.eventId)
                 )
-                shift
             }
             shifts
-
         } catch (e: Exception) {
-            Log.e("ShiftsRepository", "Failed to fetch shifts: ${e.localizedMessage}", e)
+            Log.e("ShiftsRepository", "Failed to fetch shifts with details: ${e.localizedMessage}", e)
             emptyList()
         }
     }
-
 
     suspend fun getUserDetails(userId: String): AssignedUser? {
         return try {
@@ -70,13 +56,15 @@ class ShiftsRepository @Inject constructor(
 
     suspend fun fetchTeammatesForShift(shift: Shift): List<AssignedUser> {
         val teammates = mutableListOf<AssignedUser>()
-        for (userId in shift.assignedUserIds) {
-            val userDetails = getUserDetails(userId)
-            if (userDetails != null) {
-                teammates.add(userDetails)
-            } else {
-                Log.d("TeammateRole", "User: $userId not found")
-            }
+        for (assignedUser in shift.assignedUsers) {
+            val userDetails = getUserDetails(assignedUser.userId) // Fetch additional user details (e.g., fullName)
+            val completedUser = assignedUser.copy(
+                fullName = userDetails?.fullName, // Add the fullName from `getUserDetails`
+                clockInTime = assignedUser.clockInTime,
+                clockOutTime = assignedUser.clockOutTime,
+                completedTasks = assignedUser.completedTasks
+            )
+            teammates.add(completedUser)
         }
         return teammates
     }
@@ -94,14 +82,10 @@ class ShiftsRepository @Inject constructor(
                     it
                 }
             }
-
-            shiftRef.update("assignedUsers", updatedUsers).await()
         } catch (e: Exception) {
             Log.e("ShiftsRepository", "Failed to clock in: ${e.localizedMessage}")
         }
     }
-
-
 
     suspend fun getShiftById(shiftId: String): Shift? {
         return try {

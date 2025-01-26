@@ -3,10 +3,11 @@ package nl.inholland.group9.karmakebab.data.models.shift
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import nl.inholland.group9.karmakebab.data.models.Event.Event
 
-
+@IgnoreExtraProperties
 data class Shift(
     @DocumentId var id: String? = null,
     val eventId: String = "",
@@ -17,7 +18,7 @@ data class Shift(
     var event: Event? = null
 )
 
-
+@IgnoreExtraProperties
 data class AssignedUser(
     @PropertyName("userId") val userId: String = "",
     @PropertyName("role") val role: String = "",

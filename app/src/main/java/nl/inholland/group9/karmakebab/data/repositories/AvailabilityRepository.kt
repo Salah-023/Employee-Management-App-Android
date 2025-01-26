@@ -15,7 +15,6 @@ class AvailabilityRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val authRepository: AuthRepository
 ) {
-
     suspend fun getAvailability(startDate: Date, endDate: Date): Map<Date, Availability> {
         val userId = authRepository.getCurrentUser()?.uid
         val snapshot = userId?.let {
@@ -33,7 +32,6 @@ class AvailabilityRepository @Inject constructor(
             return snapshot.documents.mapNotNull { doc ->
                 val data = doc.toObject(Availability::class.java) ?: return@mapNotNull null
                 val date = data.date.toDate()
-
                 date to data
             }.toMap()
         } else {
@@ -42,11 +40,9 @@ class AvailabilityRepository @Inject constructor(
         }
     }
 
-
     suspend fun saveAvailability(date: Date, availability: Availability) {
         val userId = authRepository.getCurrentUser()?.uid
         val formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
-        Log.d("AvailabilityRepository", "Attempting to save availability for user: $userId, date: $formattedDate, data: $availability")
 
         if (userId != null) {
             try {
@@ -56,13 +52,11 @@ class AvailabilityRepository @Inject constructor(
                     .document(formattedDate)
                     .set(availability.toMap())
                     .await()
-                Log.d("AvailabilityRepository", "Successfully saved availability for date: $formattedDate")
             } catch (e: Exception) {
                 Log.e("AvailabilityRepository", "Error saving availability: ${e.message}")
             }
         }
     }
-
 
     suspend fun deleteAvailability(date: Date) {
         val userId = authRepository.getCurrentUser()?.uid
@@ -76,5 +70,4 @@ class AvailabilityRepository @Inject constructor(
                 .await()
         }
     }
-
 }

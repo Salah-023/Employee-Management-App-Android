@@ -36,8 +36,6 @@ class HomePageViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    private val _clockedInState = mutableMapOf<String, Boolean>() // Map to track clock-in states
-    val clockedInState: Map<String, Boolean> get() = _clockedInState
 
     private val _upcomingEvents = MutableStateFlow<List<Event>>(emptyList())
     val upcomingEvents: StateFlow<List<Event>> = _upcomingEvents.asStateFlow()
@@ -48,11 +46,8 @@ class HomePageViewModel @Inject constructor(
     private val _isLoadingEvents = MutableStateFlow(false)
     val isLoadingEvents: StateFlow<Boolean> = _isLoadingEvents.asStateFlow()
 
-    private val _updatedShiftStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
-    val updatedShiftStates: StateFlow<Map<String, Boolean>> = _updatedShiftStates.asStateFlow()
-
-    private val _clockOutStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
-    val clockOutStates: StateFlow<Map<String, Boolean>> get() = _clockOutStates
+    private val _shiftStatuses = MutableStateFlow<Map<String, String>>(emptyMap())
+    val shiftStatuses: StateFlow<Map<String, String>> = _shiftStatuses
 
 
     fun fetchShiftsForCurrentUser() {
@@ -69,25 +64,21 @@ class HomePageViewModel @Inject constructor(
                 }
                 val startDate = Timestamp(calendar.time)
 
-                // Fetch shifts from today onwards, limited to 3
-                val allShifts = shiftsRepository.getShiftsForUser(
+                // Fetch shifts from the repository
+                val shifts = shiftsRepository.getShiftsForUser(
                     userId = userId,
-                    startDate = startDate,
-                    endDate = null
+                    startDate = startDate
                 )
 
-                val shiftsWithRoles = allShifts.take(3).map { shift ->
-                    val teammates = shiftsRepository.fetchTeammatesForShift(shift)
-                    val event = eventRepository.getEventById(shift.eventId)
+                // Map to roles within the ViewModel
+                val shiftsWithRoles = shifts.map { shift ->
+                    shift.id?.let { getShiftStatus(it) }
                     val userRole = shift.assignedUsers.find { it.userId == userId }?.role ?: "Unknown Role"
-
-                    shift.copy(assignedUsers = teammates, event = event) to userRole
+                    shift to userRole
                 }
 
-                // Refresh clock-in states for all fetched shifts
-                refreshClockInStates(allShifts)
+                _shiftsWithRoles.value = shiftsWithRoles.take(3) // Limit to 3 shifts
 
-                _shiftsWithRoles.value = shiftsWithRoles
             } catch (e: Exception) {
                 _error.value = "Failed to fetch shifts: ${e.localizedMessage}"
             } finally {
@@ -112,25 +103,10 @@ class HomePageViewModel @Inject constructor(
                 // Update the clock-in state in the database
                 shiftsRepository.clockIn(shiftId, userId)
 
-                // Immediately update the local state and notify observers
-                _clockedInState[shiftId] = true
-                _updatedShiftStates.value = _clockedInState.toMap() // Trigger recomposition
             } catch (e: Exception) {
                 Log.e("HomePageViewModel", "Failed to clock in: ${e.localizedMessage}")
             }
         }
-    }
-
-
-
-    // Called when the app starts to refresh clock-in states
-    fun refreshClockInStates(shifts: List<Shift>) {
-        val userId = getCurrentUserId()
-        val updatedStates = shifts.associate { shift ->
-            shift.id!! to shift.assignedUsers.any { it.userId == userId && it.clockInTime != null }
-        }
-        _clockedInState.putAll(updatedStates) // Persist state locally
-        _updatedShiftStates.value = _clockedInState
     }
 
     fun getCurrentUserId(): String? {
@@ -155,65 +131,54 @@ class HomePageViewModel @Inject constructor(
         }
     }
 
-    fun checkClockOutState(shiftId: String) {
-        val userId = getCurrentUserId() ?: return
+    fun getShiftStatus(shiftId: String) {
+        val userId = getCurrentUserId()
 
-        viewModelScope.launch {
-            try {
-                Log.d("HomePageViewModel", "Checking clock-out state for shift: $shiftId, user: $userId")
+        if (userId != null) {
+            viewModelScope.launch {
+                try {
+                    val shift = shiftsRepository.getShiftById(shiftId)
+                    val user = shift?.assignedUsers?.find { it.userId == userId }
 
-                // Fetch the shift and the user's role
-                val shift = shiftsRepository.getShiftById(shiftId)
-                val role = shift?.assignedUsers?.find { it.userId == userId }?.role ?: return@launch
+                    val newStatus = when {
+                        user == null -> "CLOCK-IN" // Default to CLOCK-IN if the user is not found
+                        user.clockInTime == null -> "CLOCK-IN"
+                        user.clockInTime != null && user.clockOutTime == null -> {
+                            val allTasks = taskRepository.fetchTasksForRole(user.role)
+                            val completedTasks = taskRepository.fetchCompletedTasks(shiftId, userId)
+                            if (completedTasks.size == allTasks.size) "CLOCK-OUT" else "GO-TO-TASKS"
+                        }
+                        user.clockInTime != null && user.clockOutTime != null -> "COMPLETED"
+                        else -> "UNKNOWN"
+                    }
 
-                Log.d("HomePageViewModel", "Role for user in shift: $role")
+                    // Update the shift status in the map
+                    _shiftStatuses.value = _shiftStatuses.value.toMutableMap().apply {
+                        this[shiftId] = newStatus
+                    }
+                } catch (e: Exception) {
+                    Log.e("HomePageViewModel", "Error fetching shift status: ${e.message}")
 
-                // Fetch all tasks for the role
-                val allTasks = taskRepository.fetchTasksForRole(role)
-                val allTaskIds = allTasks.map { it.id }.sorted()
-
-                // Fetch completed tasks
-                val completedTasks = taskRepository.fetchCompletedTasks(shiftId, userId).distinct()
-                val completedTaskIds = completedTasks.sorted()
-
-                Log.d("HomePageViewModel", "All task IDs: $allTaskIds")
-                Log.d("HomePageViewModel", "Completed task IDs: $completedTaskIds")
-
-                // Compare task IDs
-                val allTasksCompleted = allTaskIds.size == completedTaskIds.size
-                Log.d("HomePageViewModel", "All tasks completed: $allTasksCompleted")
-
-                // Update the state for this shift
-                _clockOutStates.value = _clockOutStates.value.toMutableMap().apply {
-                    this[shiftId] = allTasksCompleted
+                    // Set error status
+                    _shiftStatuses.value = _shiftStatuses.value.toMutableMap().apply {
+                        this[shiftId] = "ERROR"
+                    }
                 }
-            } catch (e: Exception) {
-                Log.e("HomePageViewModel", "Error checking clock-out state: ${e.localizedMessage}")
+            }
+        } else {
+            // Set error status
+            _shiftStatuses.value = _shiftStatuses.value.toMutableMap().apply {
+                this[shiftId] = "ERROR"
             }
         }
     }
 
-
-
-    private val _clockOutClickedStates = MutableStateFlow<Map<String, Boolean>>(emptyMap())
-    val clockOutClickedStates: StateFlow<Map<String, Boolean>> get() = _clockOutClickedStates
 
     fun clockOut(shiftId: String) {
         viewModelScope.launch {
             try {
                 val userId = getCurrentUserId() ?: return@launch
                 shiftsRepository.clockOutUser(shiftId, userId)
-
-                // Update local state
-                _clockedInState[shiftId] = false
-                _updatedShiftStates.value = _clockedInState
-
-                // Mark the shift as clocked out
-                _clockOutClickedStates.value = _clockOutClickedStates.value.toMutableMap().apply {
-                    this[shiftId] = true
-                }
-
-                Log.d("HomePageViewModel", "User clocked out for shift: $shiftId")
             } catch (e: Exception) {
                 Log.e("HomePageViewModel", "Failed to clock out: ${e.localizedMessage}")
             }

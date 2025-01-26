@@ -97,7 +97,6 @@ class AvailabilityViewModel @Inject constructor(
         }
     }
 
-
     fun saveAvailabilityForDateRange(
         startDate: Date,
         endDate: Date,
@@ -105,19 +104,12 @@ class AvailabilityViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             try {
-                Log.d(
-                    "AvailabilityViewModel1",
-                    "Starting to save availability for range: $startDate to $endDate with status: $status"
-                )
-
                 val currentCalendar = Calendar.getInstance()
                 currentCalendar.time = startOfDay(startDate) // Normalize start date to midnight
                 val normalizedEndDate = startOfDay(endDate)  // Normalize end date to midnight
 
                 while (!currentCalendar.time.after(normalizedEndDate)) { // Include endDate in iteration
                     val date = currentCalendar.time
-                    Log.d("AvailabilityViewModel1", "Processing date: $date for status: $status")
-
                     // Save availability for the current date
                     val formattedDate = startOfDay(date)
                     val availability = Availability(
@@ -127,18 +119,10 @@ class AvailabilityViewModel @Inject constructor(
                         startTime = null,
                         endTime = null
                     )
-
                     repository.saveAvailability(formattedDate, availability)
-                    Log.d("AvailabilityViewModel1", "Availability saved for date: $date with status: $status")
-
                     // Move to the next day
                     currentCalendar.add(Calendar.DAY_OF_MONTH, 1)
                 }
-
-                Log.d(
-                    "AvailabilityViewModel1",
-                    "Finished saving availability for range: $startDate to $endDate"
-                )
 
                 loadAvailability() // Reload availability to reflect changes in the UI
             } catch (e: Exception) {
@@ -146,8 +130,6 @@ class AvailabilityViewModel @Inject constructor(
             }
         }
     }
-
-
 
     fun deleteAvailability() {
         val formattedDate = startOfDay(selectedDate.value)
@@ -217,7 +199,6 @@ class AvailabilityViewModel @Inject constructor(
         }
         return dates
     }
-
 
     private fun getStartOfMonth(date: Date): Date {
         val tempCalendar = Calendar.getInstance()

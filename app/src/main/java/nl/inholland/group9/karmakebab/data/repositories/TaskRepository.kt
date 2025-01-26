@@ -15,22 +15,12 @@ class TaskRepository @Inject constructor(
 
     suspend fun fetchTasksForRole(role: String): List<Task> {
         return try {
-            Log.d("TaskRepository", "Fetching tasks for role: $role") // Log the role being queried
-
             val result = firestore.collection("roles")
                 .whereEqualTo("title", role)
                 .get()
                 .await()
-
-            Log.d("TaskRepository", "Firestore query result: ${result.documents}") // Log the raw Firestore documents
-
             val tasks = result.documents.firstOrNull()?.get("tasks") as? List<Map<String, Any>> ?: emptyList()
-
-            Log.d("TaskRepository", "Tasks fetched: $tasks") // Log the tasks fetched from Firestore
-
-            tasks.mapNotNull { Task.fromMap(it) }.also {
-                Log.d("TaskRepository", "Mapped tasks: $it") // Log the mapped Task objects
-            }
+            tasks.mapNotNull { Task.fromMap(it) }
         } catch (e: Exception) {
             Log.e("TaskRepository", "Failed to fetch tasks: ${e.localizedMessage}")
             emptyList()
@@ -74,7 +64,6 @@ class TaskRepository @Inject constructor(
                 user
             }
         }
-
         // Update the shift document with the new completed task and image path
         shiftDocument.update("assignedUsers", updatedUsers).await()
     }
@@ -83,8 +72,6 @@ class TaskRepository @Inject constructor(
         return try {
             // Fetch the shift document from Firestore
             val shiftDocument = firestore.collection("shifts").document(shiftId).get().await()
-
-            // Log the shift document contents
 
             // Extract assignedUsers and log it
             val assignedUsers = shiftDocument["assignedUsers"] as? List<Map<String, Any>> ?: emptyList()

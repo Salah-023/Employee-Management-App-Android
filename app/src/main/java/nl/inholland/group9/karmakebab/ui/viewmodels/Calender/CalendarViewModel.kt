@@ -108,22 +108,24 @@ class CalendarViewModel @Inject constructor(
                 _isLoadingShifts.value = true
                 _isLoadingEvents.value = true
 
+
                 val userId = authRepository.getCurrentUser()?.uid
                 if (userId != null) {
-                    val shiftsList = shiftsRepository.getShiftsForUser(userId, startOfWeek, endOfWeek)
-                    val shiftsWithRoles = shiftsList.map { shift ->
-                        val teammates = shiftsRepository.fetchTeammatesForShift(shift)
-                        val event = eventRepository.getEventById(shift.eventId)
-                        val userRole = shift.assignedUsers.find { it.userId == userId }?.role ?: "Unknown Role"
-                        shift.copy(assignedUsers = teammates, event = event) to userRole
+                    // Fetch shifts
+                    val shifts = shiftsRepository.getShiftsForUser(
+                        userId = userId,
+                        startDate = startOfWeek,
+                        endDate = endOfWeek
+                    )
+
+                    // Extract the role for the current user in each shift
+                    _shifts.value = shifts.map { shift ->
+                        val role = shift.assignedUsers.find { it.userId == userId }?.role ?: "Unknown Role"
+                        shift to role
                     }
-                    _shifts.value = shiftsWithRoles
-                } else {
-                    println("Error: User ID is null.")
                 }
 
-                val eventsList = eventRepository.getEvents(startOfWeek, endOfWeek)
-                _events.value = eventsList
+                _events.value = eventRepository.getEvents(startOfWeek, endOfWeek)
             } catch (e: Exception) {
                 println("Error fetching content: ${e.message}")
             } finally {
@@ -143,7 +145,5 @@ class CalendarViewModel @Inject constructor(
         val end = start.plusDays(6)
         return "${start.format(DateTimeFormatter.ofPattern("d MMM"))} - ${end.format(DateTimeFormatter.ofPattern("d MMM"))}"
     }
-
-
 }
 

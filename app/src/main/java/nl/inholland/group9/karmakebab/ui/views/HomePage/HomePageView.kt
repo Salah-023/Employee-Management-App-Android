@@ -96,8 +96,7 @@ fun HomePageView(
             }
         } else {
             items(
-                items = shiftsWithRoles,
-                key = { it.first.id!! } // Use the shift ID as the key to force recomposition when state changes
+                items = shiftsWithRoles
             ) { (shift, userRole) ->
                 UpcomingShiftCard(
                     shift = shift,
@@ -110,14 +109,11 @@ fun HomePageView(
         }
 
         item { Spacer(modifier = Modifier.height(10.dp)) }
-
         // Unavailable Button
         item {
             UnavailableButton(appViewModel = appViewModel, navController = navController)
         }
-
         item { Spacer(modifier = Modifier.height(10.dp)) }
-
         // Header: Upcoming Events
         item {
             Text(
@@ -179,21 +175,12 @@ fun UpcomingShiftCard(
     navController: NavController,
     showClockInButton: Boolean = true
 ) {
-    // Observe clock-out and clock-out click states
-    val clockOutStates by viewModel.clockOutStates.collectAsState()
-    val clockOutClickedStates by viewModel.clockOutClickedStates.collectAsState()
+    // Observe the shift status from the ViewModel
+    val shiftStatus = viewModel.shiftStatuses.collectAsState().value[shift.id] ?: "LOADING"
 
     // States for Clock-In and Clock-Out Dialog Visibility
     var showClockInDialog by remember { mutableStateOf(false) }
     var showClockOutDialog by remember { mutableStateOf(false) }
-
-    val canClockOut = clockOutStates[shift.id] ?: false
-    val isClockOutClicked = clockOutClickedStates[shift.id] ?: false
-
-    // Trigger state update when the composable is recomposed
-    LaunchedEffect(shift.id) {
-        viewModel.checkClockOutState(shift.id.toString())
-    }
 
     // Predefined colors for teammates
     val teammateColors = listOf(Color(0xFFE8468E), Color(0xFFFFBFC6), Color(0xFFDFBFFF), Color(0xFF662C83))
@@ -332,27 +319,32 @@ fun UpcomingShiftCard(
             if (showClockInButton && todayDate == shiftDate) {
                 Button(
                     onClick = {
-                        if (canClockOut) {
-                            showClockOutDialog = true // Show Clock-Out Dialog
-                        } else if (!viewModel.clockedInState[shift.id]!!) {
-                            showClockInDialog = true // Show Clock-In Dialog
-                        } else {
-                            navController.navigate("tasks/${shift.id}/${userRole}")
+                        when (shiftStatus) {
+                            "CLOCK-IN" -> showClockInDialog = true
+                            "GO-TO-TASKS" -> navController.navigate("tasks/${shift.id}/${userRole}")
+                            "CLOCK-OUT" -> showClockOutDialog = true
                         }
                     },
-                    enabled = !isClockOutClicked,
+                    enabled = shiftStatus != "COMPLETED",
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = if (isClockOutClicked) Color(0xFFFFC0CB) else if (canClockOut) Color.Red else Color(0xFFE8468E)
+                        backgroundColor = when (shiftStatus) {
+                            "CLOCK-IN" -> Color(0xFFE8468E)
+                            "GO-TO-TASKS" -> Color(0xFFE8468E)
+                            "CLOCK-OUT" -> Color.Red
+                            "COMPLETED" -> Color(0xFFE8468E)
+                            else -> Color.LightGray
+                        }
                     ),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = when {
-                            isClockOutClicked -> "COMPLETED"
-                            canClockOut -> "CLOCK-OUT"
-                            viewModel.clockedInState[shift.id] == true -> "Go to Tasks"
-                            else -> "CLOCK-IN"
+                        text = when (shiftStatus) {
+                            "CLOCK-IN" -> "CLOCK-IN"
+                            "GO-TO-TASKS" -> "GO TO TASKS"
+                            "CLOCK-OUT" -> "CLOCK-OUT"
+                            "COMPLETED" -> "COMPLETED"
+                            else -> "Loading..."
                         },
                         fontFamily = FontFamily(Font(R.font.mindset)),
                         color = Color.White,
@@ -371,11 +363,9 @@ fun UpcomingShiftCard(
             message = "Are you sure you want to clock in?",
             onConfirm = {
                 shift.id?.let {
-                    // Perform clock-in logic
                     viewModel.clockIn(it)
-                    viewModel.checkClockOutState(it) // Refresh clockOutStates
-
-                    // No need for updateClockedInState; updatedShiftStates already handles it
+                    viewModel.getShiftStatus(it)
+                    navController.navigate("home")
                 }
                 showClockInDialog = false
             },
@@ -383,23 +373,23 @@ fun UpcomingShiftCard(
         )
     }
 
-
     // Clock-Out Confirmation Dialog
     if (showClockOutDialog) {
         ConfirmationDialog(
             title = "Clock-Out",
             message = "Are you sure you want to clock out?",
             onConfirm = {
-                shift.id?.let { viewModel.clockOut(it) }
+                shift.id?.let {
+                    viewModel.clockOut(it)
+                    viewModel.getShiftStatus(it)
+                    navController.navigate("home")
+                }
                 showClockOutDialog = false
             },
             onDismiss = { showClockOutDialog = false }
         )
     }
 }
-
-
-
 
 @Composable
 fun TeammateBubble(initials: String, color: Color) {
@@ -510,9 +500,6 @@ fun UpcomingEventCard(event: Event, viewModel: HomePageViewModel) {
         }
     }
 }
-
-
-
 
 @Composable
 fun SeeMoreButton(onClick: () -> Unit) {

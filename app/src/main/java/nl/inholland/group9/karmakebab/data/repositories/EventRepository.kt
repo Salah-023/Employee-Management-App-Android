@@ -40,6 +40,4 @@ class EventRepository  @Inject constructor(private val firestore: FirebaseFirest
             emptyList()
         }
     }
-
-
 }

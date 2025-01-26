@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import nl.inholland.group9.karmakebab.data.models.auth.UserInfoResponse
 import nl.inholland.group9.karmakebab.data.repositories.AuthRepository
-import nl.inholland.group9.karmakebab.data.utils.TokenManager
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
